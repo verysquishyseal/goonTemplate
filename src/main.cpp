@@ -13,7 +13,7 @@ constexpr int SP_DRIVE_R1 = -5;
 constexpr int SP_DRIVE_R2 = -8;
 constexpr int SP_DRIVE_R3 = 2;  //Upside Down
 
-
+ASSET(RightRegular_txt);
 
 pros::MotorGroup left_motor_group({SP_DRIVE_L1, SP_DRIVE_L2, SP_DRIVE_L3},
 	pros::MotorGearset::blue
@@ -154,7 +154,9 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+  chassis.follow(RightRegular_txt, 15, 2000);
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
