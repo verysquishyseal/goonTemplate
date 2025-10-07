@@ -1,15 +1,17 @@
 #include "main.h"
 #include "lemlib/api.hpp" // IWYU pragma: keep
+#include "lemlib/chassis/trackingWheel.hpp"
 //DO CONFIG FUNTIME HERE
 
 //LEFT MOTORS
 constexpr int SP_DRIVE_L1 = -20;
 constexpr int SP_DRIVE_L2 = -15;
-constexpr int SP_DRIVE_L3 = 4;
+constexpr int SP_DRIVE_L3 = 4; //Upside Down
+
 //RIGHT MOTORS
 constexpr int SP_DRIVE_R1 = -5;
 constexpr int SP_DRIVE_R2 = -8;
-constexpr int SP_DRIVE_R3 = 2;  
+constexpr int SP_DRIVE_R3 = 2;  //Upside Down
 
 
 
@@ -23,9 +25,9 @@ pros::MotorGroup right_motor_group({SP_DRIVE_R1, SP_DRIVE_R2, SP_DRIVE_R3},
 lemlib::Drivetrain drivetrain(
 	&left_motor_group, // left motor group
     &right_motor_group, // right motor group
-    10, // 10 inch track width
-    lemlib::Omniwheel::NEW_4, // using new 4" omnis
-    360, // drivetrain rpm is 360
+    12.5, // 12.5 inch track width (distance from left to right wheels)
+    lemlib::Omniwheel::NEW_275, // using new 2.75" omnis
+    450, // drivetrain rpm is 600 * 36/48
     2 // horizontal drift is 2 (for now)
 );
 
@@ -36,9 +38,9 @@ pros::Rotation horizontal_encoder(20);
 // vertical tracking wheel encoder
 pros::adi::Encoder vertical_encoder('C', 'D', true);
 // horizontal tracking wheel
-lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_275, -5.75);
+lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, -5.75);
 // vertical tracking wheel
-lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_275, -2.5);
+lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_2, -2.5);
 
 // odometry settings
 lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
