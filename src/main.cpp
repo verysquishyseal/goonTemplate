@@ -4,16 +4,18 @@
 //DO CONFIG FUNTIME HERE
 
 //LEFT MOTORS
-constexpr int SP_DRIVE_L1 = -20;
-constexpr int SP_DRIVE_L2 = -15;
-constexpr int SP_DRIVE_L3 = 4; //Upside Down
+constexpr int SP_DRIVE_L1 = -1;
+constexpr int SP_DRIVE_L2 = -11;
+constexpr int SP_DRIVE_L3 = 12; //Upside Down
 
 //RIGHT MOTORS
-constexpr int SP_DRIVE_R1 = -5;
+constexpr int SP_DRIVE_R1 = -20;
 constexpr int SP_DRIVE_R2 = -8;
-constexpr int SP_DRIVE_R3 = 2;  //Upside Down
+constexpr int SP_DRIVE_R3 = 19;  //Upside Down
 
 ASSET(RightRegular_txt);
+
+pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 pros::MotorGroup left_motor_group({SP_DRIVE_L1, SP_DRIVE_L2, SP_DRIVE_L3},
 	pros::MotorGearset::blue
@@ -32,11 +34,14 @@ lemlib::Drivetrain drivetrain(
 );
 
 // imu
-pros::Imu imu(10);
+pros::Imu imu(7);
 // horizontal tracking wheel encoder
-pros::Rotation horizontal_encoder(20);
+pros::Rotation horizontal_encoder(8);
 // vertical tracking wheel encoder
-pros::adi::Encoder vertical_encoder('C', 'D', true);
+// pros::adi::Encoder vertical_encoder('C', 'D', true);
+
+pros::Rotation vertical_encoder(16);
+
 // horizontal tracking wheel
 lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, -5.75);
 // vertical tracking wheel
@@ -172,21 +177,25 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
  
+
+
+
 void opcontrol() {
-	pros::Controller master(pros::E_CONTROLLER_MASTER);
+    // loop forever
+    while (true) {
+        // get left y and right x positions
+        int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        // pros::lcd::print(3, "Yay: %f", controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X));
+        
 
+        
+        
+        // move the robot
+        chassis.arcade(leftY, rightX);
 
-	while (true) {
-		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
-		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
-		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);  // Prints status of the emulated screen LCDs
+        // delay to save resources
+        pros::delay(20);
+    }
 
-		// Arcade control scheme
-		int dir = master.get_analog(ANALOG_LEFT_Y);    // Gets amount forward/backward from left joystick
-		int turn = master.get_analog(ANALOG_RIGHT_X);  // Gets the turn left/right from right joystick
-		left_motor_group.move(dir - turn);                      // Sets left motor voltage
-		right_motor_group.move(dir + turn);                     // Sets right motor voltage
-		pros::delay(20);                               // Run for 20 ms then update
-	}
 }
-
