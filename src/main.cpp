@@ -19,10 +19,14 @@ constexpr int SP_INTAKE_UPPER = 19;
 
 
 
-ASSET(RightRegular_txt);
+ASSET(RightNOAWP1_txt);
+ASSET(RightNOAWP2_txt);
+ASSET(RightNOAWP3_txt);
 
 //intake
-pros::MotorGroup intake_group({SP_INTAKE_LOWER,SP_INTAKE_UPPER});
+pros::MotorGroup intake_group({SP_INTAKE_LOWER, SP_INTAKE_UPPER});
+pros::Motor bottomIntake(SP_INTAKE_LOWER); //for individual control in auton or whatever
+pros::Motor topIntake(SP_INTAKE_UPPER); 
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
@@ -170,7 +174,13 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-  chassis.follow(RightRegular_txt, 15, 2000);
+  bottomIntake.move(127);
+  chassis.follow(RightNOAWP1_txt, 15, 2000);
+  //put down scraper
+  chassis.follow(RightNOAWP2_txt, 15, 2000);
+  //put up scraper
+  chassis.follow(RightNOAWP3_txt, 15, 2000);
+  topIntake.move(127);
 }
 
 /**
@@ -216,5 +226,4 @@ void opcontrol() {
         // delay to save resources
         pros::delay(20);
     }
-
 }
