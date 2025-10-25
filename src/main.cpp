@@ -1,19 +1,28 @@
 #include "main.h"
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "lemlib/chassis/trackingWheel.hpp"
+#include "pros/motors.hpp"
 //DO CONFIG FUNTIME HERE
 
 //LEFT MOTORS
-constexpr int SP_DRIVE_L1 = -1;
-constexpr int SP_DRIVE_L2 = -11;
-constexpr int SP_DRIVE_L3 = 12; //Upside Down
+constexpr int SP_DRIVE_L1 = -2;
+constexpr int SP_DRIVE_L2 = -9;
+constexpr int SP_DRIVE_L3 = 20; //Upside Down
 
 //RIGHT MOTORS
-constexpr int SP_DRIVE_R1 = -20;
-constexpr int SP_DRIVE_R2 = -8;
-constexpr int SP_DRIVE_R3 = 19;  //Upside Down
+constexpr int SP_DRIVE_R1 = 10;
+constexpr int SP_DRIVE_R2 = 1;
+constexpr int SP_DRIVE_R3 = -7; // Upside Down
+
+constexpr int SP_INTAKE_LOWER = 18;
+constexpr int SP_INTAKE_UPPER = 19;
+
+
 
 ASSET(RightRegular_txt);
+
+//intake
+pros::MotorGroup intake_group({SP_INTAKE_LOWER,SP_INTAKE_UPPER});
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
@@ -23,6 +32,7 @@ pros::MotorGroup left_motor_group({SP_DRIVE_L1, SP_DRIVE_L2, SP_DRIVE_L3},
 pros::MotorGroup right_motor_group({SP_DRIVE_R1, SP_DRIVE_R2, SP_DRIVE_R3},
 	pros::MotorGearset::blue
 );
+
 
 lemlib::Drivetrain drivetrain(
 	&left_motor_group, // left motor group
@@ -34,13 +44,13 @@ lemlib::Drivetrain drivetrain(
 );
 
 // imu
-pros::Imu imu(7);
+pros::Imu imu(14);
 // horizontal tracking wheel encoder
 pros::Rotation horizontal_encoder(8);
 // vertical tracking wheel encoder
 // pros::adi::Encoder vertical_encoder('C', 'D', true);
 
-pros::Rotation vertical_encoder(16);
+pros::Rotation vertical_encoder(9);
 
 // horizontal tracking wheel
 lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_2, -5.75);
@@ -186,10 +196,19 @@ void opcontrol() {
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-        // pros::lcd::print(3, "Yay: %f", controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X));
-        
-
-        
+        // pros::lcd::print(3, "Yay: %f", controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1));
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+          intake_group.move(127);
+        } else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+          intake_group.move(-127);
+        } else {
+          intake_group.brake();
+        }
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
+        //   left_motor_group.move()
+            
+        }
+        //set up macro later
         
         // move the robot
         chassis.arcade(leftY, rightX);
