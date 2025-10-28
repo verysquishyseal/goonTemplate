@@ -1,7 +1,9 @@
 #include "main.h"
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "lemlib/chassis/trackingWheel.hpp"
+#include "pros/adi.h"
 #include "pros/motors.hpp"
+#include <thread>
 //DO CONFIG FUNTIME HERE
 
 //LEFT MOTORS
@@ -14,8 +16,8 @@ constexpr int SP_DRIVE_R1 = 10;
 constexpr int SP_DRIVE_R2 = 1;
 constexpr int SP_DRIVE_R3 = -7; // Upside Down
 
-constexpr int SP_INTAKE_LOWER = 18;
-constexpr int SP_INTAKE_UPPER = 19;
+constexpr int SP_INTAKE_LOWER = 19;
+constexpr int SP_INTAKE_UPPER = 18;
 
 
 
@@ -37,6 +39,9 @@ pros::MotorGroup right_motor_group({SP_DRIVE_R1, SP_DRIVE_R2, SP_DRIVE_R3},
 	pros::MotorGearset::blue
 );
 
+pros::ADIDigitalOut scraperControl('C');
+
+pros::ADIDigitalOut descoreControl('D');
 
 lemlib::Drivetrain drivetrain(
 	&left_motor_group, // left motor group
@@ -160,7 +165,10 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
-void competition_initialize() {}
+void competition_initialize() {
+  scraperControl.set_value(true);
+  descoreControl.set_value(true); 
+}
 
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -173,14 +181,90 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {
+
+// void antiJamBottomIntake() {
+//   while (true) {
+//     if (bottomIntake.get_actual_velocity() < 5 && bottomIntake.get_efficiency() > 0) {
+//     bottomIntake.move(-127); 
+//     } else {
+//         bottomIntake.move(127);
+//     }
+//     std::this_thread::sleep_for(std::chrono::milliseconds(50)); // prevent CPU overload
+//   }
+  
+// //   bottomIntake;
+// }
+
+void right_awp(){
+  scraperControl.set_value(true);
+  bottomIntake.move(127); 
+    // std::thread intakeThread(antiJamBottomIntake);
+  chassis.setPose(46.921, 11.123, 290);
+  bottomIntake.move(127); 
+
+    // chassis.turnToPoint(20.695, 21.922, 500);
+    chassis.turnToPoint(20.695, 21.922, 3000);
+    chassis.moveToPoint(20.695, 21.922, 3000);
+bottomIntake.move(127); 
+    // chassis.turnToPoint(51.076, 46.518, 500);
+    chassis.turnToPoint(42.483, 46.635, 3000);
+    chassis.moveToPoint(42.483, 46.635, 3000);
+    scraperControl.set_value(false);
+bottomIntake.move(127); 
+    // chassis.turnToPoint(67.555, 46.798, 500);
+    chassis.turnToPoint(57.54, 46.272, 3000);
+    chassis.moveToPoint(57.54, 46.272, 3000);
+    bottomIntake.move(127); 
+    pros::delay(3000);
+
+    // chassis.turnToPoint(23.348, 47.135, 500, {.forwards = false});
+    // chassis.turnToPoint(30.329, 47.135, 3000, {.forwards = false});
+    chassis.moveToPoint(30.329, 47.123, 3000, {.forwards = false});
+    bottomIntake.move(127); 
+    scraperControl.set_value(true);
+    // intakeThread.detach();
+    topIntake.move(127); 
+}
+
+void left_awp() {
+  scraperControl.set_value(true);
   bottomIntake.move(127);
-  chassis.follow(RightNOAWP1_txt, 15, 2000);
-  //put down scraper
-  chassis.follow(RightNOAWP2_txt, 15, 2000);
-  //put up scraper
-  chassis.follow(RightNOAWP3_txt, 15, 2000);
-  topIntake.move(127);
+  // vex::task bottomIntakeTask = task(antiJamIntakeBottomIntake);
+    // std::thread intakeThread(antiJamBottomIntake); 
+    // bottomIntake.move(127);
+    chassis.setPose(46.921, -11.123, 250);
+    chassis.moveToPoint(20.695, -21.922, 5000);
+    chassis.moveToPoint(51.076, -46.518, 5000);
+    scraperControl.set_value(false);
+    chassis.moveToPoint(67.555, -46.798, 5000);
+    pros::delay(3000);
+    
+    chassis.moveToPoint(23.348, -47.135, 5000);
+    scraperControl.set_value(true);
+    topIntake.move(127);
+    
+}
+
+/*chassis.moveTo(0, 0, 5000);
+chassis.moveTo(1.178, 28.338, 5000);
+chassis.moveTo(34.682, 8.201, 5000);
+chassis.moveTo(40.58, -7.188, 5000);
+chassis.moveTo(25.778, 34.468, 5000);
+*/
+void autonomous() {
+  //   scraperControl.set_value(false);
+  //   chassis.setPose(54.442,13.437,270);
+  //   bottomIntake.move(127);
+  //   chassis.follow(RightNOAWP1_txt, 15, 2000);
+  //   // put down scraper
+  //   scraperControl.set_value(true);
+  //   chassis.follow(RightNOAWP2_txt, 15, 2000);
+  //   scraperControl.set_value(false);
+  //   //put up scraper
+  //   chassis.follow(RightNOAWP3_txt, 15, 2000);
+  //   topIntake.move(127);
+
+    right_awp();
 }
 
 /**
@@ -201,7 +285,11 @@ void autonomous() {
 
 
 void opcontrol() {
-    // loop forever
+  // loop forever
+  bool scraperToggle = false;
+  bool descoreToggle = false;
+  bool toggleA = true;
+  bool toggleX = true; 
     while (true) {
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
@@ -211,12 +299,32 @@ void opcontrol() {
           intake_group.move(127);
         } else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
           intake_group.move(-127);
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+          bottomIntake.move(127);
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+          bottomIntake.move(-127);
         } else {
           intake_group.brake();
         }
+
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
+            if (toggleX) {
+              toggleX = false;
+              scraperToggle = !scraperToggle;
+              scraperControl.set_value(scraperToggle); 
+            }
+        } else {
+          toggleX = true;
+        }
+
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-        //   left_motor_group.move()
-            
+            if (toggleA) {
+              toggleA = false;
+              descoreToggle = !descoreToggle;
+              descoreControl.set_value(descoreToggle); 
+            }
+        } else {
+          toggleA = true; 
         }
         //set up macro later
         
