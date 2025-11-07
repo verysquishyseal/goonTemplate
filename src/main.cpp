@@ -39,9 +39,9 @@ pros::MotorGroup right_motor_group({SP_DRIVE_R1, SP_DRIVE_R2, SP_DRIVE_R3},
 	pros::MotorGearset::blue
 );
 
-pros::ADIDigitalOut scraperControl('C');
+pros::ADIDigitalOut scraperControl('A');
 
-pros::ADIDigitalOut descoreControl('D');
+pros::ADIDigitalOut descoreControl('H');
 
 lemlib::Drivetrain drivetrain(
 	&left_motor_group, // left motor group
@@ -107,6 +107,8 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
 );
 
 void initialize() {
+  scraperControl.set_value(false);
+  descoreControl.set_value(false); 
     pros::lcd::initialize(); // initialize brain screen
     chassis.calibrate(); // calibrate sensors
     // print position to brain screen
@@ -166,8 +168,8 @@ void disabled() {}
  * starts.
  */
 void competition_initialize() {
-  scraperControl.set_value(true);
-  descoreControl.set_value(true); 
+  // scraperControl.set_value(true);
+  // descoreControl.set_value(false); 
 }
 
 /**
@@ -286,23 +288,23 @@ void autonomous() {
 
 void opcontrol() {
   // loop forever
-  bool scraperToggle = false;
+  int intakeToggle = 1;
+  bool scraperToggle = true;
   bool descoreToggle = false;
-  bool toggleA = true;
+  bool toggleR2 = true;
   bool toggleX = true; 
+  bool toggleL2 = true;
     while (true) {
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         // pros::lcd::print(3, "Yay: %f", controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1));
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-          intake_group.move(127);
-        } else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-          intake_group.move(-127);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
           bottomIntake.move(127);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+          topIntake.move(intakeToggle*127);
+        } else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
           bottomIntake.move(-127);
+          topIntake.move(intakeToggle * -127);
         } else {
           intake_group.brake();
         }
@@ -317,14 +319,23 @@ void opcontrol() {
           toggleX = true;
         }
 
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-            if (toggleA) {
-              toggleA = false;
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+            if (toggleL2) {
+              toggleL2 = false;
+              intakeToggle = 0 - intakeToggle; 
+            }
+        } else {
+          toggleL2 = true;
+        }
+
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+            if (toggleR2) {
+              toggleR2 = false;
               descoreToggle = !descoreToggle;
               descoreControl.set_value(descoreToggle); 
             }
         } else {
-          toggleA = true; 
+          toggleR2 = true; 
         }
         //set up macro later
         
